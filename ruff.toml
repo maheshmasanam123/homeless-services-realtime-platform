@@ -5,6 +5,7 @@ target-version = "py311"
 select = ["E", "W", "F"]
 ignore = [
     "E501",  # line too long
+    "E702",  # multiple statements on one line (compact data builders)
     "F401",  # unused imports (reference code keeps illustrative imports)
     "F841",  # local var assigned but unused (test fixtures, etc.)
 ]
