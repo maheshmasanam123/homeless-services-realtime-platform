@@ -91,14 +91,25 @@ never written in clear text past the ingestion gateway.
 | DevOps                  | Docker compose, Terraform, GitHub Actions + GitLab CI + Jenkins  |
 | Legacy bridge           | Sqoop + Hive scripts simulating a CDH agency feed                |
 
-## Quick start (one-command local)
+## Quick start
 
+**Zero-infra demo (3 commands, pure Python):**
+```bash
+pip install faker pandas pyarrow
+python -m generator.run --clients 500 --projects 20
+python demo.py
+```
+
+Expected output: 5,000+ service events flow through bronze → silver → gold
+star schema, PII columns confirmed scrubbed, service mix and financial
+assistance totals printed.
+
+**Full streaming + multi-cloud flavor (Docker):**
 ```bash
 docker compose -f docker/docker-compose.yml up -d
-python -m generator.run --seed
-python -m streaming.producer.send_events --rate 30
-python pipelines/airflow/dags/medallion_dag.py    # via Airflow UI
-streamlit run dashboards/streamlit/app.py
+python -m generator.run --clients 2000
+python -m streaming.producer.send_events --rate 30   # Kafka events
+streamlit run dashboards/streamlit/app.py            # live dashboard
 ```
 
 ## Repo layout
