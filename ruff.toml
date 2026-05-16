@@ -1,0 +1,14 @@
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = ["E", "W", "F"]
+ignore = [
+    "E501",  # line too long
+    "F401",  # unused imports (reference code keeps illustrative imports)
+    "F841",  # local var assigned but unused (test fixtures, etc.)
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["F401", "F811"]
+"notebooks/*" = ["F401", "E402"]
