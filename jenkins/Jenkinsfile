@@ -1,0 +1,26 @@
+pipeline {
+  agent any
+  environment { PYTHONUNBUFFERED = "1" }
+  stages {
+    stage('Setup')   { steps { sh 'python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt' } }
+    stage('Lint')    { steps { sh '. .venv/bin/activate && pip install ruff && ruff check .' } }
+    stage('Tests')   { steps { sh '. .venv/bin/activate && pip install pytest && pytest -q' } }
+    stage('Smoke')   {
+      steps {
+        sh '''
+        . .venv/bin/activate
+        python -m generator.run --clients 500
+        python notebooks/bronze/batch_load_hmis_csvs.py
+        python notebooks/silver/conform_and_mask.py
+        python notebooks/gold/build_star_schema.py
+        python great_expectations/reconciliation.py
+        '''
+      }
+    }
+    stage('Deploy')  {
+      when { branch 'main' }
+      steps { sh 'echo "deploy to Databricks / Snowflake via SDK"' }
+    }
+  }
+  post { always { archiveArtifacts artifacts: '**/target/**, **/data/gold/**', allowEmptyArchive: true } }
+}

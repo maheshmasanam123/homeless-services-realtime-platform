@@ -1,0 +1,24 @@
+version: 2
+
+sources:
+  - name: hmis_gold
+    database: HMIS
+    schema: GOLD
+    tables: [{name: fact_service_event}, {name: dim_project}, {name: dim_client}]
+
+models:
+  - name: fct_service_event
+    description: One row per service delivered
+    columns:
+      - name: service_id
+        tests: [unique, not_null]
+      - name: service_date
+        tests: [not_null]
+      - name: project_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_project'), field: project_id}
+  - name: dim_project
+    columns:
+      - name: project_id
+        tests: [unique, not_null]

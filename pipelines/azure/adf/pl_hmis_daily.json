@@ -1,0 +1,48 @@
+{
+  "name": "pl_hmis_daily_to_bronze",
+  "properties": {
+    "description": "Daily HMIS extract to ADLS Gen2 bronze, partitioned by date. Triggers Databricks silver/gold notebooks on success.",
+    "parameters": {
+      "businessDate": { "type": "string" },
+      "sourceTable":  { "type": "string" }
+    },
+    "activities": [
+      {
+        "name": "Copy_Agency_to_Bronze",
+        "type": "Copy",
+        "policy": { "timeout": "0.02:00:00", "retry": 3, "retryIntervalInSeconds": 60 },
+        "typeProperties": {
+          "source": { "type": "SqlServerSource",
+                      "sqlReaderQuery": "SELECT * FROM hmis.@{pipeline().parameters.sourceTable} WHERE CAST(updated_at AS date) = '@{pipeline().parameters.businessDate}'" },
+          "sink":   { "type": "ParquetSink",
+                      "storeSettings": { "type": "AzureBlobFSWriteSettings" } },
+          "enableStaging": false
+        },
+        "inputs":  [{ "referenceName": "ds_agency_sql",  "type": "DatasetReference" }],
+        "outputs": [{ "referenceName": "ds_adls_bronze", "type": "DatasetReference",
+                      "parameters": { "tableName": "@pipeline().parameters.sourceTable",
+                                      "businessDate": "@pipeline().parameters.businessDate" } }]
+      },
+      {
+        "name": "Run_Silver_Notebook",
+        "type": "DatabricksNotebook",
+        "dependsOn": [{ "activity": "Copy_Agency_to_Bronze", "dependencyConditions": ["Succeeded"] }],
+        "typeProperties": {
+          "notebookPath": "/Repos/hmis/silver/conform_and_mask",
+          "baseParameters": { "businessDate": "@pipeline().parameters.businessDate" }
+        },
+        "linkedServiceName": { "referenceName": "ls_databricks", "type": "LinkedServiceReference" }
+      },
+      {
+        "name": "Run_Gold_Notebook",
+        "type": "DatabricksNotebook",
+        "dependsOn": [{ "activity": "Run_Silver_Notebook", "dependencyConditions": ["Succeeded"] }],
+        "typeProperties": {
+          "notebookPath": "/Repos/hmis/gold/build_star_schema",
+          "baseParameters": { "businessDate": "@pipeline().parameters.businessDate" }
+        },
+        "linkedServiceName": { "referenceName": "ls_databricks", "type": "LinkedServiceReference" }
+      }
+    ]
+  }
+}

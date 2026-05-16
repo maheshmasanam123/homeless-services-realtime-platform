@@ -1,0 +1,15 @@
+name: hmis_dbt
+version: "1.0"
+config-version: 2
+profile: hmis
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  hmis_dbt:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

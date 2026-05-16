@@ -1,0 +1,20 @@
+{
+  "name": "tr_hmis_daily",
+  "properties": {
+    "type": "TumblingWindowTrigger",
+    "typeProperties": {
+      "frequency": "Hour", "interval": 24,
+      "startTime": "2026-01-01T06:00:00Z",
+      "delay": "00:15:00",
+      "maxConcurrency": 4,
+      "retryPolicy": { "count": 3, "intervalInSeconds": 300 }
+    },
+    "pipeline": {
+      "pipelineReference": { "referenceName": "pl_hmis_daily_to_bronze", "type": "PipelineReference" },
+      "parameters": {
+        "businessDate": "@formatDateTime(trigger().outputs.windowStartTime, 'yyyy-MM-dd')",
+        "sourceTable": "enrollments"
+      }
+    }
+  }
+}

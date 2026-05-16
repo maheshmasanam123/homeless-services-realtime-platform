@@ -1,0 +1,41 @@
+stages: [lint, test, deploy]
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip"
+
+cache:
+  paths: [.pip/]
+
+lint:
+  stage: lint
+  image: python:3.11
+  script:
+    - pip install -r requirements.txt ruff
+    - ruff check .
+
+unit-test:
+  stage: test
+  image: python:3.11
+  script:
+    - pip install -r requirements.txt pytest
+    - pytest -q
+
+medallion-smoke:
+  stage: test
+  image: openjdk:17
+  before_script:
+    - apt-get update && apt-get install -y python3-pip
+    - pip install -r requirements.txt
+  script:
+    - python -m generator.run --clients 500
+    - python notebooks/bronze/batch_load_hmis_csvs.py
+    - python notebooks/silver/conform_and_mask.py
+    - python notebooks/gold/build_star_schema.py
+
+deploy-databricks:
+  stage: deploy
+  image: python:3.11
+  only: [main]
+  script:
+    - pip install databricks-cli
+    - databricks workspace import_dir notebooks /Repos/hmis --overwrite

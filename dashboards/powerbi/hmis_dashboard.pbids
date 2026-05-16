@@ -1,0 +1,18 @@
+{
+  "version": "0.1",
+  "connections": [
+    {
+      "details": {
+        "protocol": "snowflake",
+        "address": {
+          "server":   "<account>.snowflakecomputing.com",
+          "database": "HMIS",
+          "schema":   "GOLD",
+          "warehouse":"WH_REPORTING"
+        }
+      },
+      "options": {},
+      "mode": "DirectQuery"
+    }
+  ]
+}

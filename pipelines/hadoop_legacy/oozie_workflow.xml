@@ -1,0 +1,23 @@
+<workflow-app name="hmis-nightly" xmlns="uri:oozie:workflow:0.5">
+  <start to="sqoop_import"/>
+
+  <action name="sqoop_import">
+    <shell xmlns="uri:oozie:shell-action:0.3">
+      <exec>sqoop_import.sh</exec>
+      <file>sqoop_import.sh#sqoop_import.sh</file>
+    </shell>
+    <ok to="hive_refresh"/>
+    <error to="fail"/>
+  </action>
+
+  <action name="hive_refresh">
+    <hive xmlns="uri:oozie:hive-action:0.6">
+      <script>hive_external.sql</script>
+    </hive>
+    <ok to="end"/>
+    <error to="fail"/>
+  </action>
+
+  <kill name="fail"><message>HMIS nightly failed: [${wf:errorMessage(wf:lastErrorNode())}]</message></kill>
+  <end name="end"/>
+</workflow-app>
